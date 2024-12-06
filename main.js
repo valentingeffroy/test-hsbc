@@ -382,31 +382,20 @@ function updateGroupDisplays(totals, group) {
 
 function updateDisplay(price, selector) {
   document.querySelectorAll(selector).forEach((element) => {
-    // set alt message, whats displayed if value is 0
-    let altMessage = " - Not selected";
-    // set selectors that should never show " - not selected"
-    let plainSelectors = [
-      "[data-output-category=grand-total]",
-      "[data-output-category=discount]",
-    ];
-    if (plainSelectors.includes(selector)) {
-      altMessage = "0";
-    }
-
-    // Vérifier que price est un nombre valide
     let displayValue;
     if (price === 0 || price === null || price === undefined || isNaN(price)) {
-      displayValue = altMessage;
+      displayValue = " - Not selected";
     } else {
       try {
-        displayValue = Number(price).toLocaleString("en-US", {
+        // Arrondir au nombre entier le plus proche
+        const roundedPrice = Math.round(Number(price));
+        displayValue = roundedPrice.toLocaleString("en-US", {
           maximumFractionDigits: 0,
         });
       } catch (error) {
         displayValue = price;
       }
     }
-
     element.textContent = displayValue;
   });
 }
