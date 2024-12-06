@@ -6727,31 +6727,27 @@ var GPA = [
     Plan: "Plan 1",
     Sum: "500k",
     "Occupation Class": 1,
-    "Premium (brochure)": 203.72,
-    Price: 201.852,
+    Price: 203.72,
   },
   {
     Key: "500k2",
     Plan: "Plan 1",
     Sum: "500k",
     "Occupation Class": 2,
-    "Premium (brochure)": 254.62,
-    Price: 252.288,
+    Price: 254.62,
   },
   {
     Key: "500k3",
     Plan: "Plan 1",
     Sum: "500k",
     "Occupation Class": 3,
-    "Premium (brochure)": 436.0,
-    Price: 432.0,
+    Price: 436.0,
   },
   {
     Key: "300k1",
     Plan: "Plan 2",
     Sum: "300k",
     "Occupation Class": 1,
-    "Premium (brochure)": 122.23,
     Price: 122.23,
   },
   {
@@ -6759,7 +6755,6 @@ var GPA = [
     Plan: "Plan 2",
     Sum: "300k",
     "Occupation Class": 2,
-    "Premium (brochure)": 152.77,
     Price: 152.77,
   },
   {
@@ -6767,7 +6762,6 @@ var GPA = [
     Plan: "Plan 2",
     Sum: "300k",
     "Occupation Class": 3,
-    "Premium (brochure)": 261.6,
     Price: 261.6,
   },
   {
@@ -6775,7 +6769,6 @@ var GPA = [
     Plan: "Plan 3",
     Sum: "200k",
     "Occupation Class": 1,
-    "Premium (brochure)": 81.49,
     Price: 81.49,
   },
   {
@@ -6783,7 +6776,6 @@ var GPA = [
     Plan: "Plan 3",
     Sum: "200k",
     "Occupation Class": 2,
-    "Premium (brochure)": 101.85,
     Price: 101.85,
   },
   {
@@ -6791,7 +6783,6 @@ var GPA = [
     Plan: "Plan 3",
     Sum: "200k",
     "Occupation Class": 3,
-    "Premium (brochure)": 174.4,
     Price: 174.4,
   },
   {
@@ -6799,7 +6790,6 @@ var GPA = [
     Plan: "Plan 4",
     Sum: "150k",
     "Occupation Class": 1,
-    "Premium (brochure)": 61.12,
     Price: 61.12,
   },
   {
@@ -6807,7 +6797,6 @@ var GPA = [
     Plan: "Plan 4",
     Sum: "150k",
     "Occupation Class": 2,
-    "Premium (brochure)": 76.39,
     Price: 76.39,
   },
   {
@@ -6815,7 +6804,6 @@ var GPA = [
     Plan: "Plan 4",
     Sum: "150k",
     "Occupation Class": 3,
-    "Premium (brochure)": 130.8,
     Price: 130.8,
   },
   {
@@ -6823,7 +6811,6 @@ var GPA = [
     Plan: "Plan 5",
     Sum: "100k",
     "Occupation Class": 1,
-    "Premium (brochure)": 40.74,
     Price: 40.74,
   },
   {
@@ -6831,7 +6818,6 @@ var GPA = [
     Plan: "Plan 5",
     Sum: "100k",
     "Occupation Class": 2,
-    "Premium (brochure)": 50.92,
     Price: 50.92,
   },
   {
@@ -6839,7 +6825,6 @@ var GPA = [
     Plan: "Plan 5",
     Sum: "100k",
     "Occupation Class": 3,
-    "Premium (brochure)": 87.2,
     Price: 87.2,
   },
   {
@@ -6847,7 +6832,6 @@ var GPA = [
     Plan: "Plan 6",
     Sum: "50k",
     "Occupation Class": 1,
-    "Premium (brochure)": 20.37,
     Price: 20.37,
   },
   {
@@ -6855,7 +6839,6 @@ var GPA = [
     Plan: "Plan 6",
     Sum: "50k",
     "Occupation Class": 2,
-    "Premium (brochure)": 25.46,
     Price: 25.46,
   },
   {
@@ -6863,7 +6846,6 @@ var GPA = [
     Plan: "Plan 6",
     Sum: "50k",
     "Occupation Class": 3,
-    "Premium (brochure)": 43.6,
     Price: 43.6,
   },
 ];
