@@ -176,36 +176,49 @@ if (headcountInput) {
 }
 
 // Add event listeners to all input fields
+// Add event listeners to all input fields
 document.querySelectorAll("input, select").forEach((element) => {
-  element.addEventListener(
-    element.tagName === "INPUT" ? "input" : "change",
-    handleInputChange
-  );
+  if (element.type === "checkbox") {
+    element.addEventListener("change", handleInputChange);
+  } else {
+    element.addEventListener(
+      element.tagName === "INPUT" ? "input" : "change",
+      handleInputChange
+    );
+  }
+
+  // Debug
+  if (element.name && element.name.includes("GHS")) {
+    console.log("Added listener to:", element.name);
+  }
+});
+
+// Ajouter spécifiquement pour les checkboxes GHS
+document.querySelectorAll('input[name^="GHS"]').forEach((checkbox) => {
+  checkbox.addEventListener("change", () => {
+    console.log("GHS checkbox changed:", checkbox.name, checkbox.checked);
+    handleInputChange();
+  });
 });
 
 function handleInputChange(event) {
+  console.log("handleInputChange triggered");
+
   const totals = calculateTotals();
-
-  // for (const category in totals) {
-  // if (category === "sumTotal") continue; // Skip the categoriesTotals property
-
-  // for (const key in totals[category]) {
-  //  totals.sumTotal[key] += totals[category][key];
-  // }
-  // }
-  //console.log("current prices", totals);
-  //console.log("current pirces", totals);
-  // Output:
-  // {
-  //   GroupMedical: 147,
-  //   GroupLifeInsurance: 51,
-  //   GroupPersonalAccident: 132
-  // }
+  console.log("Calculated totals:", totals);
 
   const categoryTotals = totals.sumTotal;
   const group1totals = totals.cat1Total;
   const group2totals = totals.cat2Total;
   const group3totals = totals.cat3Total;
+
+  console.log("Updating displays with:", {
+    categoryTotals,
+    group1totals,
+    group2totals,
+    group3totals,
+  });
+
   updateDisplays(categoryTotals);
   updateGroupDisplays(group1totals, "1");
   updateGroupDisplays(group2totals, "2");
@@ -381,24 +394,28 @@ function updateGroupDisplays(totals, group) {
 }
 
 function updateDisplay(price, selector) {
+  console.log('updateDisplay called with:', {price, selector});
+  
   document.querySelectorAll(selector).forEach((element) => {
     let displayValue;
     if (price === 0 || price === null || price === undefined || isNaN(price)) {
       displayValue = " - Not selected";
     } else {
       try {
-        // Arrondir au nombre entier le plus proche
         const roundedPrice = Math.round(Number(price));
         displayValue = roundedPrice.toLocaleString("en-US", {
           maximumFractionDigits: 0,
         });
       } catch (error) {
+        console.error('Error formatting price:', error);
         displayValue = price;
       }
     }
+    console.log('Setting display value:', displayValue);
     element.textContent = displayValue;
   });
 }
+
 
 // ... Existing functions for parseInputName and calculateTablePrice ...
 
