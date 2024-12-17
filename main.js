@@ -367,7 +367,7 @@ function calculateTotals() {
 function calculateTablePrice(table, inputs) {
   console.log(`🔍 Looking up price for ${table} with inputs:`, inputs);
 
-  const pricingTable = window[table];
+  const pricingTable = window[table]; 
   if (!Array.isArray(pricingTable)) {
     console.error(`❌ No pricing table found for ${table}`);
     return null;
