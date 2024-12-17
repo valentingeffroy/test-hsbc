@@ -202,22 +202,18 @@ document.querySelectorAll('input[name^="GHS"]').forEach((checkbox) => {
 });
 
 function handleInputChange(event) {
-  console.log("handleInputChange triggered");
+  console.log(
+    "🔄 Input change detected:",
+    event?.target?.name || "Unknown input"
+  );
 
   const totals = calculateTotals();
-  console.log("Calculated totals:", totals);
+  console.log("📊 Calculated totals:", totals);
 
   const categoryTotals = totals.sumTotal;
   const group1totals = totals.cat1Total;
   const group2totals = totals.cat2Total;
   const group3totals = totals.cat3Total;
-
-  console.log("Updating displays with:", {
-    categoryTotals,
-    group1totals,
-    group2totals,
-    group3totals,
-  });
 
   updateDisplays(categoryTotals);
   updateGroupDisplays(group1totals, "1");
@@ -227,6 +223,8 @@ function handleInputChange(event) {
 }
 
 function calculateTotals() {
+  console.log("🧮 Starting calculations...");
+
   const collectiveTotals = {
     sumTotal: {
       GroupMedical: 0,
@@ -251,21 +249,35 @@ function calculateTotals() {
   };
 
   Object.entries(categories).forEach(([key, category]) => {
+    console.log(`📌 Processing category: ${key}`);
+
     const benefitsSelectedId = benefitsIdMap[key];
     const benefitSelectedCheckbox = document.getElementById(benefitsSelectedId);
-    const benefitGroupSelected = benefitSelectedCheckbox
-      ? benefitSelectedCheckbox.checked
-      : false;
+
+    if (!benefitSelectedCheckbox) {
+      console.error(`❌ Benefit checkbox not found for ${benefitsSelectedId}`);
+      return;
+    }
+
+    const benefitGroupSelected = benefitSelectedCheckbox.checked;
+    console.log(
+      `✓ Benefit ${benefitsSelectedId} selected: ${benefitGroupSelected}`
+    );
 
     for (let table of category) {
-      // const relatedInputs = gatherRelatedInputs(table);
+      console.log(`📋 Processing table: ${table}`);
+
       const group1Inputs = gatherRelatedGroupInputs(table, "1");
       const group2Inputs = gatherRelatedGroupInputs(table, "2");
       const group3Inputs = gatherRelatedGroupInputs(table, "3");
-      //get checkbox
+
+      console.log("📥 Gathered inputs:", {
+        group1: group1Inputs,
+        group2: group2Inputs,
+        group3: group3Inputs,
+      });
+
       let g1check = document.getElementsByName(`${table}1`);
-      //console.log(table, "checkbox", g1check);
-      // const price = calculateTablePrice(table, relatedInputs);
       let g2check = document.getElementsByName(`${table}2`);
       let g3check = document.getElementsByName(`${table}3`);
 
@@ -279,9 +291,15 @@ function calculateTotals() {
         benefitGroupSelected &&
         numberOfGroups >= 1
       ) {
-        //console.log(table, "is checked");
         group1Price = calculateTablePrice(table, group1Inputs);
-        //console.log(group1Price);
+        if (group1Price === null) {
+          console.error(
+            `❌ No price found for ${table} group 1 with inputs:`,
+            group1Inputs
+          );
+        } else {
+          console.log(`💰 Group 1 ${table} price:`, group1Price);
+        }
       }
 
       if (
@@ -290,9 +308,15 @@ function calculateTotals() {
         benefitGroupSelected &&
         numberOfGroups >= 2
       ) {
-        //console.log(table, "is checked");
         group2Price = calculateTablePrice(table, group2Inputs);
-        //console.log(group1Price);
+        if (group2Price === null) {
+          console.error(
+            `❌ No price found for ${table} group 2 with inputs:`,
+            group2Inputs
+          );
+        } else {
+          console.log(`💰 Group 2 ${table} price:`, group2Price);
+        }
       }
 
       if (
@@ -301,9 +325,15 @@ function calculateTotals() {
         benefitGroupSelected &&
         numberOfGroups === 3
       ) {
-        //console.log(table, "is checked");
         group3Price = calculateTablePrice(table, group3Inputs);
-        //console.log(group1Price);
+        if (group3Price === null) {
+          console.error(
+            `❌ No price found for ${table} group 3 with inputs:`,
+            group3Inputs
+          );
+        } else {
+          console.log(`💰 Group 3 ${table} price:`, group3Price);
+        }
       }
 
       collectiveTotals["cat1Total"][key] += group1Price || 0;
@@ -315,16 +345,50 @@ function calculateTotals() {
         group2Price * headcounts.group2 +
         group3Price * headcounts.group3;
 
+      console.log(`📊 Sum for ${table}:`, {
+        group1: group1Price * headcounts.group1,
+        group2: group2Price * headcounts.group2,
+        group3: group3Price * headcounts.group3,
+        total: sumOfGroups,
+      });
+
       collectiveTotals["sumTotal"][key] += sumOfGroups || 0;
 
-      // PB: `[data-output-categoty=]` can already be in the updateDisplay function
       updateDisplay(group1Price, `[data-output-category=${table}1]`);
       updateDisplay(group2Price, `[data-output-category=${table}2]`);
       updateDisplay(group3Price, `[data-output-category=${table}3]`);
     }
   });
 
+  console.log("🏁 Final totals:", collectiveTotals);
   return collectiveTotals;
+}
+
+function calculateTablePrice(table, inputs) {
+  console.log(`🔍 Looking up price for ${table} with inputs:`, inputs);
+
+  const pricingTable = window[table];
+  if (!Array.isArray(pricingTable)) {
+    console.error(`❌ No pricing table found for ${table}`);
+    return null;
+  }
+
+  const entry = pricingTable.find((row) => {
+    return Object.keys(inputs).every(
+      (key) => String(row[key]) === String(inputs[key])
+    );
+  });
+
+  if (!entry) {
+    console.error(
+      `❌ No matching price entry found for ${table} with inputs:`,
+      inputs
+    );
+    return null;
+  }
+
+  console.log(`✅ Found price for ${table}:`, entry.Price);
+  return entry.Price;
 }
 
 function gatherRelatedInputs(table) {
@@ -394,8 +458,8 @@ function updateGroupDisplays(totals, group) {
 }
 
 function updateDisplay(price, selector) {
-  console.log('updateDisplay called with:', {price, selector});
-  
+  console.log("updateDisplay called with:", { price, selector });
+
   document.querySelectorAll(selector).forEach((element) => {
     let displayValue;
     if (price === 0 || price === null || price === undefined || isNaN(price)) {
@@ -407,15 +471,14 @@ function updateDisplay(price, selector) {
           maximumFractionDigits: 0,
         });
       } catch (error) {
-        console.error('Error formatting price:', error);
+        console.error("Error formatting price:", error);
         displayValue = price;
       }
     }
-    console.log('Setting display value:', displayValue);
+    console.log("Setting display value:", displayValue);
     element.textContent = displayValue;
   });
 }
-
 
 // ... Existing functions for parseInputName and calculateTablePrice ...
 
