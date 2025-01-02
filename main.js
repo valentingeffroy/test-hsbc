@@ -1,4 +1,3 @@
-// old version
 // Define valid tables and categories
 const validTables = [
   "GHS",
@@ -177,36 +176,45 @@ if (headcountInput) {
 }
 
 // Add event listeners to all input fields
+// Add event listeners to all input fields
 document.querySelectorAll("input, select").forEach((element) => {
-  element.addEventListener(
-    element.tagName === "INPUT" ? "input" : "change",
-    handleInputChange
-  );
+  if (element.type === "checkbox") {
+    element.addEventListener("change", handleInputChange);
+  } else {
+    element.addEventListener(
+      element.tagName === "INPUT" ? "input" : "change",
+      handleInputChange
+    );
+  }
+
+  // Debug
+  if (element.name && element.name.includes("GHS")) {
+    console.log("Added listener to:", element.name);
+  }
+});
+
+// Ajouter spécifiquement pour les checkboxes GHS
+document.querySelectorAll('input[name^="GHS"]').forEach((checkbox) => {
+  checkbox.addEventListener("change", () => {
+    console.log("GHS checkbox changed:", checkbox.name, checkbox.checked);
+    handleInputChange();
+  });
 });
 
 function handleInputChange(event) {
+  console.log(
+    "🔄 Input change detected:",
+    event?.target?.name || "Unknown input"
+  );
+
   const totals = calculateTotals();
-
-  // for (const category in totals) {
-  // if (category === "sumTotal") continue; // Skip the categoriesTotals property
-
-  // for (const key in totals[category]) {
-  //  totals.sumTotal[key] += totals[category][key];
-  // }
-  // }
-  //console.log("current prices", totals);
-  //console.log("current pirces", totals);
-  // Output:
-  // {
-  //   GroupMedical: 147,
-  //   GroupLifeInsurance: 51,
-  //   GroupPersonalAccident: 132
-  // }
+  console.log("📊 Calculated totals:", totals);
 
   const categoryTotals = totals.sumTotal;
   const group1totals = totals.cat1Total;
   const group2totals = totals.cat2Total;
   const group3totals = totals.cat3Total;
+
   updateDisplays(categoryTotals);
   updateGroupDisplays(group1totals, "1");
   updateGroupDisplays(group2totals, "2");
@@ -215,6 +223,8 @@ function handleInputChange(event) {
 }
 
 function calculateTotals() {
+  console.log("🧮 Starting calculations...");
+
   const collectiveTotals = {
     sumTotal: {
       GroupMedical: 0,
@@ -239,18 +249,35 @@ function calculateTotals() {
   };
 
   Object.entries(categories).forEach(([key, category]) => {
+    console.log(`📌 Processing category: ${key}`);
+
     const benefitsSelectedId = benefitsIdMap[key];
     const benefitSelectedCheckbox = document.getElementById(benefitsSelectedId);
+
+    if (!benefitSelectedCheckbox) {
+      console.error(`❌ Benefit checkbox not found for ${benefitsSelectedId}`);
+      return;
+    }
+
     const benefitGroupSelected = benefitSelectedCheckbox.checked;
+    console.log(
+      `✓ Benefit ${benefitsSelectedId} selected: ${benefitGroupSelected}`
+    );
+
     for (let table of category) {
-      // const relatedInputs = gatherRelatedInputs(table);
+      console.log(`📋 Processing table: ${table}`);
+
       const group1Inputs = gatherRelatedGroupInputs(table, "1");
       const group2Inputs = gatherRelatedGroupInputs(table, "2");
       const group3Inputs = gatherRelatedGroupInputs(table, "3");
-      //get checkbox
+
+      console.log("📥 Gathered inputs:", {
+        group1: group1Inputs,
+        group2: group2Inputs,
+        group3: group3Inputs,
+      });
+
       let g1check = document.getElementsByName(`${table}1`);
-      //console.log(table, "checkbox", g1check);
-      // const price = calculateTablePrice(table, relatedInputs);
       let g2check = document.getElementsByName(`${table}2`);
       let g3check = document.getElementsByName(`${table}3`);
 
@@ -264,9 +291,15 @@ function calculateTotals() {
         benefitGroupSelected &&
         numberOfGroups >= 1
       ) {
-        //console.log(table, "is checked");
         group1Price = calculateTablePrice(table, group1Inputs);
-        //console.log(group1Price);
+        if (group1Price === null) {
+          console.error(
+            `❌ No price found for ${table} group 1 with inputs:`,
+            group1Inputs
+          );
+        } else {
+          console.log(`💰 Group 1 ${table} price:`, group1Price);
+        }
       }
 
       if (
@@ -275,9 +308,15 @@ function calculateTotals() {
         benefitGroupSelected &&
         numberOfGroups >= 2
       ) {
-        //console.log(table, "is checked");
         group2Price = calculateTablePrice(table, group2Inputs);
-        //console.log(group1Price);
+        if (group2Price === null) {
+          console.error(
+            `❌ No price found for ${table} group 2 with inputs:`,
+            group2Inputs
+          );
+        } else {
+          console.log(`💰 Group 2 ${table} price:`, group2Price);
+        }
       }
 
       if (
@@ -286,9 +325,15 @@ function calculateTotals() {
         benefitGroupSelected &&
         numberOfGroups === 3
       ) {
-        //console.log(table, "is checked");
         group3Price = calculateTablePrice(table, group3Inputs);
-        //console.log(group1Price);
+        if (group3Price === null) {
+          console.error(
+            `❌ No price found for ${table} group 3 with inputs:`,
+            group3Inputs
+          );
+        } else {
+          console.log(`💰 Group 3 ${table} price:`, group3Price);
+        }
       }
 
       collectiveTotals["cat1Total"][key] += group1Price || 0;
@@ -300,16 +345,50 @@ function calculateTotals() {
         group2Price * headcounts.group2 +
         group3Price * headcounts.group3;
 
+      console.log(`📊 Sum for ${table}:`, {
+        group1: group1Price * headcounts.group1,
+        group2: group2Price * headcounts.group2,
+        group3: group3Price * headcounts.group3,
+        total: sumOfGroups,
+      });
+
       collectiveTotals["sumTotal"][key] += sumOfGroups || 0;
 
-      // PB: `[data-output-categoty=]` can already be in the updateDisplay function
       updateDisplay(group1Price, `[data-output-category=${table}1]`);
       updateDisplay(group2Price, `[data-output-category=${table}2]`);
       updateDisplay(group3Price, `[data-output-category=${table}3]`);
     }
   });
 
+  console.log("🏁 Final totals:", collectiveTotals);
   return collectiveTotals;
+}
+
+function calculateTablePrice(table, inputs) {
+  console.log(`🔍 Looking up price for ${table} with inputs:`, inputs);
+
+  const pricingTable = window[table]; 
+  if (!Array.isArray(pricingTable)) {
+    console.error(`❌ No pricing table found for ${table}`);
+    return null;
+  }
+
+  const entry = pricingTable.find((row) => {
+    return Object.keys(inputs).every(
+      (key) => String(row[key]) === String(inputs[key])
+    );
+  });
+
+  if (!entry) {
+    console.error(
+      `❌ No matching price entry found for ${table} with inputs:`,
+      inputs
+    );
+    return null;
+  }
+
+  console.log(`✅ Found price for ${table}:`, entry.Price);
+  return entry.Price;
 }
 
 function gatherRelatedInputs(table) {
@@ -379,23 +458,25 @@ function updateGroupDisplays(totals, group) {
 }
 
 function updateDisplay(price, selector) {
+  console.log("updateDisplay called with:", { price, selector });
+
   document.querySelectorAll(selector).forEach((element) => {
-    // set alt message, whats displayed if value is 0
-    let altMessage = " - Not selected";
-    // set selectors that should never show " - not selected"
-    let plainSelectors = [
-      "[data-output-category=grand-total]",
-      "[data-output-category=discount]",
-    ];
-    if (plainSelectors.includes(selector)) {
-      altMessage = "0";
+    let displayValue;
+    if (price === 0 || price === null || price === undefined || isNaN(price)) {
+      displayValue = " - Not selected";
+    } else {
+      try {
+        const roundedPrice = Math.round(Number(price));
+        displayValue = roundedPrice.toLocaleString("en-US", {
+          maximumFractionDigits: 0,
+        });
+      } catch (error) {
+        console.error("Error formatting price:", error);
+        displayValue = price;
+      }
     }
-    element.textContent =
-      price === 0
-        ? altMessage
-        : price.toLocaleString("en-US", {
-            maximumFractionDigits: 0,
-          });
+    console.log("Setting display value:", displayValue);
+    element.textContent = displayValue;
   });
 }
 
@@ -440,11 +521,10 @@ function updateOverallTotals(finalTotals) {
 
 function calulateLifestyleBenefits() {
   let lifestyleTotal = 0;
-  // PB: is nauri an addon or plan or group?
-  // rename nauri into more specific
   let nauri = document.getElementsByName("Naluri-digital");
 
-  if (nauri[0].checked) {
+  // Vérifier si l'élément existe avant d'accéder à sa propriété checked
+  if (nauri && nauri.length > 0 && nauri[0].checked) {
     lifestyleTotal += 53;
   }
 
@@ -762,20 +842,20 @@ triggerGroupRadios.forEach((name) => {
 });
 
 function getNoOfGroups() {
-let selectedValue = parseInt(getRadioValue("employee-categories"),10)
+  let selectedValue = parseInt(getRadioValue("employee-categories"), 10);
   return selectedValue;
 }
 
 function getRadioValue(groupName) {
-const radios = document.getElementsByName(groupName);
-let selectedValue = "" ;
-for (const radio of radios) {
-  if (radio.checked) {
-    selectedValue = radio.value
-    break;
+  const radios = document.getElementsByName(groupName);
+  let selectedValue = "";
+  for (const radio of radios) {
+    if (radio.checked) {
+      selectedValue = radio.value;
+      break;
+    }
   }
-}
-return selectedValue;
+  return selectedValue;
 }
 
 // Set the default value for life insurance ect -- before syncing of deps and none dependent fields
@@ -1080,9 +1160,14 @@ function setupLinkedSelects(gtlId, gciId) {
   const gtlSelect = document.getElementById(gtlId);
   const gciSelect = document.getElementById(gciId);
 
+  // Vérifier que les deux éléments existent
+  if (!gtlSelect || !gciSelect) {
+    return; // Sortir de la fonction si un des éléments n'existe pas
+  }
+
   function updateGciOptions() {
     const selectedGtlValue = parseInt(gtlSelect.value.replace("k", "000"), 10);
-    let highestAvailableValue = 0; // Initialize to a low value
+    let highestAvailableValue = 0;
 
     for (const option of gciSelect.options) {
       const optionValue = parseInt(option.value.replace("k", "000"), 10);
@@ -1091,7 +1176,7 @@ function setupLinkedSelects(gtlId, gciId) {
       } else {
         option.disabled = false;
         if (optionValue > highestAvailableValue) {
-          highestAvailableValue = option.value; // Update only if higher
+          highestAvailableValue = option.value;
         }
       }
     }
@@ -1102,20 +1187,21 @@ function setupLinkedSelects(gtlId, gciId) {
     }
   }
 
-  // Initialize once to set the correct state
   updateGciOptions();
-
-  // Update whenever the GTL select changes
   gtlSelect.addEventListener("change", updateGciOptions);
 }
 
-// Setup for each group
-setupLinkedSelects("1-GTL-Sum", "1-GCI-Sum");
-setupLinkedSelects("2-GTL-Sum", "2-GCI-Sum");
-setupLinkedSelects("3-GTL-Sum", "3-GCI-Sum");
-setupLinkedSelects("dep-1-GTL-Sum", "dep-1-GCI-Sum");
-setupLinkedSelects("dep-2-GTL-Sum", "dep-2-GCI-Sum");
-setupLinkedSelects("dep-3-GTL-Sum", "dep-3-GCI-Sum");
+// Entourer les appels de setupLinkedSelects dans un try/catch pour éviter les erreurs
+try {
+  setupLinkedSelects("1-GTL-Sum", "1-GCI-Sum");
+  setupLinkedSelects("2-GTL-Sum", "2-GCI-Sum");
+  setupLinkedSelects("3-GTL-Sum", "3-GCI-Sum");
+  setupLinkedSelects("dep-1-GTL-Sum", "dep-1-GCI-Sum");
+  setupLinkedSelects("dep-2-GTL-Sum", "dep-2-GCI-Sum");
+  setupLinkedSelects("dep-3-GTL-Sum", "dep-3-GCI-Sum");
+} catch (error) {
+  console.log("Some GTL/GCI elements not found:", error);
+}
 
 // Add this code to set up the event listener for the "estimate-back" button
 document.getElementById("estimate-back").addEventListener("click", function () {
@@ -1131,14 +1217,15 @@ document.getElementById("estimate-back").addEventListener("click", function () {
 });
 
 function toggleEditStatus(button) {
+  if (!button) return;
+
   // Get the closest parent container with edit-status attribute
   let container = button.closest("[edit-status]");
   if (!container) return;
+
   const editGroup = container.getAttribute("for-edit-group");
   const groupInputs = document.querySelectorAll(`[edit-group=${editGroup}`);
   const editInputsWrapper = container.querySelector("[edit-inputs-wrapper]");
-  //console.log(groupInputs);
-  //console.log(editInputsWrapper);
 
   if (button.getAttribute("edit-btn") === "edit") {
     // Switch to edit mode
@@ -1269,8 +1356,17 @@ for (let i = 1; i <= 3; i++) {
     const gemmIndex = Array.from(ghsPlanNormal.options).findIndex(
       (option) => option.value === valueToFind
     );
-    // Rule: Update spans
-    gemmPlanSpan.textContent = gemmPlan.options[gemmIndex].text;
+
+    // Vérifier que l'index est valide et que l'option existe
+    if (
+      gemmPlanSpan &&
+      gemmPlan &&
+      gemmPlan.options &&
+      gemmIndex !== -1 &&
+      gemmPlan.options[gemmIndex]
+    ) {
+      gemmPlanSpan.textContent = gemmPlan.options[gemmIndex].text;
+    }
 
     // Add or remove the 'disabled' class to the parent label
     if (gemmCheckbox.disabled) {
@@ -1290,32 +1386,40 @@ for (let i = 1; i <= 3; i++) {
 }
 
 //check insurance types if selected
-
 const insuranceTypeIds = {
   "personal-accident": ["GPA", "dep-GPA"],
   "group-life": ["GTL", "dep-GTL"],
   "group-medical": ["GHS", "dep-GHS"],
 };
 
+// Modifier cette partie pour vérifier l'existence des éléments
 for (let insuranceType of Object.keys(insuranceTypeIds)) {
   const typeCheckbox = document.getElementById(`${insuranceType}`);
 
-  typeCheckbox.addEventListener("change", () =>
-    checkInsuranceType(typeCheckbox)
-  );
+  // Vérifier si l'élément existe avant d'ajouter l'event listener
+  if (typeCheckbox) {
+    typeCheckbox.addEventListener("change", () =>
+      checkInsuranceType(typeCheckbox)
+    );
+  }
 }
 
 function checkInsuranceType(typeCheckbox) {
+  if (!typeCheckbox) return;
+
   const insuranceisChecked = typeCheckbox.checked;
 
   for (let checkboxId of insuranceTypeIds[`${typeCheckbox.id}`]) {
     for (let i = 1; i <= 3; i++) {
       const checkbox = document.getElementById(`${checkboxId}${i}`);
-      let checkboxIsChecked = checkbox.checked;
+      // Vérifier si le checkbox existe
+      if (checkbox) {
+        let checkboxIsChecked = checkbox.checked;
 
-      if (insuranceisChecked !== checkboxIsChecked) {
-        checkbox.previousElementSibling.click();
-        checkboxIsChecked = checkbox.checked;
+        if (insuranceisChecked !== checkboxIsChecked) {
+          checkbox.previousElementSibling.click();
+          checkboxIsChecked = checkbox.checked;
+        }
       }
     }
   }
@@ -1335,45 +1439,107 @@ const dependentCheckboxes = [
   "dep-GPA",
 ];
 
-let checkboxArray = []
-
+let checkboxArray = [];
 
 getAllDepCheckboxIds();
 
 function getAllDepCheckboxIds() {
-for (let i = 1; i <= 3; i++) {
-  dependentCheckboxes.forEach((id) => {
-    const object = {}
-    object.checkbox = document.getElementById(`${id}${i}`);
-    object.group = i
-    checkboxArray.push(object);
-  })
+  for (let i = 1; i <= 3; i++) {
+    dependentCheckboxes.forEach((id) => {
+      const checkbox = document.getElementById(`${id}${i}`);
+      // Ajouter à l'array seulement si le checkbox existe
+      if (checkbox) {
+        const object = {
+          checkbox: checkbox,
+          group: i,
+        };
+        checkboxArray.push(object);
+      }
+    });
+  }
 }
 
-}
-
+// Ajouter les event listeners seulement pour les checkboxes qui existent
 checkboxArray.forEach((object) => {
-  object.checkbox.addEventListener("change", updateDependentSelectStatus);
+  if (object.checkbox) {
+    object.checkbox.addEventListener("change", updateDependentSelectStatus);
+  }
 });
 
-// Add event listeners to the main checkboxes
+// Modifier aussi la partie qui gère les radios des dépendants
 for (let i = 1; i <= 3; i++) {
- const dependentRadios = document.getElementsByName(`member-group-${i}-dependents`);
- dependentRadios.forEach((radio) => {
-  radio.addEventListener("change",updateDependentSelectStatus);
-});
+  const dependentRadios = document.getElementsByName(
+    `member-group-${i}-dependents`
+  );
+  if (dependentRadios.length > 0) {
+    dependentRadios.forEach((radio) => {
+      radio.addEventListener("change", updateDependentSelectStatus);
+    });
+  }
 }
 
 function updateDependentSelectStatus() {
   checkboxArray.forEach((object) => {
-    const isSelected = object.checkbox.checked;
-    const selectedText = document.getElementById(`sel-${object.checkbox.id}`);
-    const groupHasDependents = getRadioValue(`member-group-${object.group}-dependents`) === "yes";
-    if (selectedText) {
-      selectedText.innerText = isSelected && groupHasDependents ? "Selected" : "Not selected";
+    if (object.checkbox) {
+      // Vérifier que le checkbox existe
+      const isSelected = object.checkbox.checked;
+      const selectedText = document.getElementById(`sel-${object.checkbox.id}`);
+      const groupHasDependents =
+        getRadioValue(`member-group-${object.group}-dependents`) === "yes";
+      if (selectedText) {
+        selectedText.innerText =
+          isSelected && groupHasDependents ? "Selected" : "Not selected";
+      }
     }
-  })
+  });
 }
+
+// Initialiser seulement si des éléments existent
+if (checkboxArray.length > 0) {
+  updateDependentSelectStatus();
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  // Activer les Basic Plan par défaut
+  const basicPlans = [
+    "GHS1",
+    "GHS2",
+    "GHS3",
+    "GPA1",
+    "GPA2",
+    "GPA3",
+    "GTL1",
+    "GTL2",
+    "GTL3",
+  ];
+  basicPlans.forEach((planId) => {
+    const checkbox = document.getElementById(planId);
+    if (checkbox) {
+      // Activer le checkbox s'il n'est pas déjà activé
+      if (!checkbox.checked) {
+        checkbox.checked = true;
+      }
+
+      // Ajouter la classe pour le style visuel du toggle
+      const toggleDiv = checkbox.previousElementSibling;
+      if (toggleDiv && toggleDiv.classList.contains("form_checkbox-toggle")) {
+        toggleDiv.classList.add("w--redirected-checked");
+      }
+
+      // Retirer la classe disabled-group du groupe parent
+      const tabInputGroup = checkbox.closest(".tab_input-group");
+      if (tabInputGroup) {
+        tabInputGroup.classList.remove("disabled-group");
+
+        // Activer tous les selects dans ce groupe
+        const groupSelects = tabInputGroup.querySelectorAll("select");
+        groupSelects.forEach((select) => {
+          select.disabled = false;
+        });
+      }
+    }
+  });
+});
 
 // Initialize for each checkbox
 updateDependentSelectStatus();
