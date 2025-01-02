@@ -22,6 +22,29 @@ const benefitsIdMap = {
   GroupPersonalAccident: "personal-accident",
 };
 
+// After your initial constants (validTables, categories, etc.)
+
+function addDependentEventListeners() {
+  // For dependent checkboxes
+  document.querySelectorAll('input[name^="dep-"]').forEach((element) => {
+    if (element.type === "checkbox") {
+      element.addEventListener("change", handleInputChange);
+    }
+  });
+
+  // For dependent selects
+  document.querySelectorAll('select[name^="dep-"]').forEach((element) => {
+    element.addEventListener("change", handleInputChange);
+  });
+
+  // For dependent inputs
+  document
+    .querySelectorAll('input[name^="dep-"]:not([type="checkbox"])')
+    .forEach((element) => {
+      element.addEventListener("input", handleInputChange);
+    });
+}
+
 function updateNumberOfGroups(radios) {
   return function () {
     for (const radio of radios) {
@@ -148,18 +171,21 @@ document.querySelectorAll('input[name^="GHS"]').forEach((checkbox) => {
 });
 
 function handleInputChange(event) {
+  // Calculate all totals
   const totals = calculateTotals();
   const categoryTotals = totals.sumTotal;
   const group1totals = totals.cat1Total;
   const group2totals = totals.cat2Total;
   const group3totals = totals.cat3Total;
 
+  // Update all displays
   updateDisplays(categoryTotals);
   updateGroupDisplays(group1totals, "1");
   updateGroupDisplays(group2totals, "2");
   updateGroupDisplays(group3totals, "3");
   updateOverallTotals(totals);
 }
+
 
 function calculateTotals() {
   const collectiveTotals = {
@@ -305,7 +331,11 @@ function gatherRelatedGroupInputs(table, groupNumber) {
   allElements.forEach((element) => {
     const { group, table: inputTable, heading } = parseInputName(element.name);
 
-    if (inputTable === table && group === groupNumber) {
+    // Include both regular inputs and dependent inputs
+    if (
+      (inputTable === table && group === groupNumber) ||
+      element.name.startsWith(`dep-${groupNumber}-${table}`)
+    ) {
       inputValues[heading] = element.value;
     }
   });
@@ -428,7 +458,7 @@ function distributeHeadcount(groups) {
   const groupNumber = parseInt(groups, 10);
   const groupHeadcount = Math.floor(totalHeadcount / groupNumber);
   const remainder = totalHeadcount % groupNumber;
-  
+
   for (let i = 1; i <= groupNumber; i++) {
     const loopNumber = i === 1 ? groupHeadcount + remainder : groupHeadcount;
     document.getElementsByName(`headcount${i}`)[0].value = loopNumber;
@@ -438,9 +468,19 @@ function distributeHeadcount(groups) {
 }
 
 // Initialize event listeners and default values
-document.addEventListener("DOMContentLoaded", function() {
-  const basicPlans = ["GHS1", "GHS2", "GHS3", "GPA1", "GPA2", "GPA3", "GTL1", "GTL2", "GTL3"];
-  
+document.addEventListener("DOMContentLoaded", function () {
+  const basicPlans = [
+    "GHS1",
+    "GHS2",
+    "GHS3",
+    "GPA1",
+    "GPA2",
+    "GPA3",
+    "GTL1",
+    "GTL2",
+    "GTL3",
+  ];
+
   basicPlans.forEach((planId) => {
     const checkbox = document.getElementById(planId);
     if (checkbox && !checkbox.checked) {
@@ -449,14 +489,16 @@ document.addEventListener("DOMContentLoaded", function() {
       if (toggleDiv?.classList.contains("form_checkbox-toggle")) {
         toggleDiv.classList.add("w--redirected-checked");
       }
-      
+
       const tabInputGroup = checkbox.closest(".tab_input-group");
       if (tabInputGroup) {
         tabInputGroup.classList.remove("disabled-group");
-        tabInputGroup.querySelectorAll("select").forEach(select => {
+        tabInputGroup.querySelectorAll("select").forEach((select) => {
           select.disabled = false;
         });
       }
     }
   });
+  // Add event listeners for dependent fields
+  addDependentEventListeners();
 });
