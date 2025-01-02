@@ -1,3 +1,4 @@
+// version 1
 // Define valid tables and categories
 const validTables = [
   "GHS",
