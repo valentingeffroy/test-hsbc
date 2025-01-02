@@ -41229,3 +41229,24 @@ var GMM = [
   { Benefit: "45k (25% Co-Pay)", Age: 84, Price: 1134.918 },
   { Benefit: "45k (25% Co-Pay)", Age: 85, Price: 1134.918 }
 ];
+
+// Fonction pour mettre à jour les prix
+function updatePrices(data) {
+  return data.map(item => {
+      return {
+          ...item,
+          Price: (item.Price/1.08)*1.09
+      };
+  });
+}
+
+// Application de la formule à chaque variable
+GHS = updatePrices(GHS);
+GEMM = updatePrices(GEMM);
+GP = updatePrices(GP);
+SP = updatePrices(SP);
+DT = updatePrices(DT);
+GPA = updatePrices(GPA);
+GTL = updatePrices(GTL);
+GCI = updatePrices(GCI);
+GMM = updatePrices(GMM);
