@@ -14,13 +14,11 @@ const validTables = [
 // Define valid tables and categories
 const categories = {
   GroupMedical: ["GHS", "GEMM", "GP", "SP", "DT"],
-  GroupLifeInsurance: ["GTL", "GCI"],
   GroupPersonalAccident: ["GPA"],
 };
 
 const benefitsIdMap = {
   GroupMedical: "group-medical",
-  GroupLifeInsurance: "group-life",
   GroupPersonalAccident: "personal-accident",
 };
 
@@ -83,7 +81,7 @@ const numbers = [1, 2, 3];
 
 /**
  * the following piece of code is repeating multiple times in updateHeadcounts()
- * 
+ *
  * for (const number of numbers) {
         const headcountInput = document.getElementById(`headcount${number}`);
         headcountInput.setCustomValidity("Invalid field.");
@@ -93,7 +91,7 @@ const numbers = [1, 2, 3];
       headcountWarning.style.display = "block";
 
  * it can be extracted into a tiny function with variables
- * function doWhatever(valididty, textContent, display) {...} 
+ * function doWhatever(valididty, textContent, display) {...}
  */
 
 function updateHeadcounts() {
@@ -177,20 +175,18 @@ if (headcountInput) {
 }
 
 // Add event listeners to all input fields
-// Add event listeners to all input fields
 document.querySelectorAll("input, select").forEach((element) => {
   if (element.type === "checkbox") {
-    element.addEventListener("change", handleInputChange);
+    element.addEventListener("change", (event) => {
+      console.log("Checkbox changed:", event.target.name, event.target.checked);
+      handleTabInputGroup(event);
+      handleInputChange(event);
+    });
   } else {
     element.addEventListener(
       element.tagName === "INPUT" ? "input" : "change",
       handleInputChange
     );
-  }
-
-  // Debug
-  if (element.name && element.name.includes("GHS")) {
-    console.log("Added listener to:", element.name);
   }
 });
 
@@ -286,11 +282,24 @@ function calculateTotals() {
       let group2Price = 0;
       let group3Price = 0;
 
+      // Check both regular and dependant toggles
+      const g1Toggle = document.querySelector(`input[name="${table}1"]`);
+      const g2Toggle = document.querySelector(`input[name="${table}2"]`);
+      const g3Toggle = document.querySelector(`input[name="${table}3"]`);
+      const depG1Toggle = document.querySelector(`input[name="dep-${table}1"]`);
+      const depG2Toggle = document.querySelector(`input[name="dep-${table}2"]`);
+      const depG3Toggle = document.querySelector(`input[name="dep-${table}3"]`);
+
+      const g1IsActive = g1Toggle?.checked || depG1Toggle?.checked;
+      const g2IsActive = g2Toggle?.checked || depG2Toggle?.checked;
+      const g3IsActive = g3Toggle?.checked || depG3Toggle?.checked;
+
       if (
         g1check.length > 0 &&
         g1check[0].checked &&
         benefitGroupSelected &&
-        numberOfGroups >= 1
+        numberOfGroups >= 1 &&
+        g1IsActive
       ) {
         group1Price = calculateTablePrice(table, group1Inputs);
         if (group1Price === null) {
@@ -307,7 +316,8 @@ function calculateTotals() {
         g2check.length > 0 &&
         g2check[0].checked &&
         benefitGroupSelected &&
-        numberOfGroups >= 2
+        numberOfGroups >= 2 &&
+        g2IsActive
       ) {
         group2Price = calculateTablePrice(table, group2Inputs);
         if (group2Price === null) {
@@ -324,7 +334,8 @@ function calculateTotals() {
         g3check.length > 0 &&
         g3check[0].checked &&
         benefitGroupSelected &&
-        numberOfGroups === 3
+        numberOfGroups === 3 &&
+        g3IsActive
       ) {
         group3Price = calculateTablePrice(table, group3Inputs);
         if (group3Price === null) {
@@ -368,16 +379,23 @@ function calculateTotals() {
 function calculateTablePrice(table, inputs) {
   console.log(`🔍 Looking up price for ${table} with inputs:`, inputs);
 
-  const pricingTable = window[table]; 
+  const pricingTable = window[table];
   if (!Array.isArray(pricingTable)) {
     console.error(`❌ No pricing table found for ${table}`);
     return null;
   }
 
+  // For GPA table, ensure we're matching the Sum value correctly
   const entry = pricingTable.find((row) => {
-    return Object.keys(inputs).every(
-      (key) => String(row[key]) === String(inputs[key])
-    );
+    return Object.keys(inputs).every((key) => {
+      if (table === "GPA" && key === "Sum") {
+        // Convert both values to the same format for comparison (e.g., "300k" to "300000")
+        const inputValue = inputs[key].replace("k", "000");
+        const rowValue = String(row[key]).replace("k", "000");
+        return inputValue === rowValue;
+      }
+      return String(row[key]) === String(inputs[key]);
+    });
   });
 
   if (!entry) {
@@ -417,22 +435,46 @@ function gatherRelatedInputs(table) {
 function gatherRelatedGroupInputs(table, groupNumber) {
   let inputValues = {};
   const allElements = document.querySelectorAll("input, select");
-
-  // Automatically fetch the age input value
   const ageInput = document.querySelector(
     'input[name^="age"], select[name^="age"]'
   );
+
   if (ageInput && table !== "GPA") {
     inputValues["Age"] = parseInt(ageInput.value, 10);
   }
 
-  allElements.forEach((element) => {
-    const { group, table: inputTable, heading } = parseInputName(element.name);
+  // For GPA, get both regular and dependant Sum values
+  if (table === "GPA") {
+    // Try regular GPA sum first
+    const regularSum = document.querySelector(
+      `select[name="${groupNumber}-GPA-Sum"]`
+    );
+    // Try dependant GPA sum
+    const depSum = document.querySelector(
+      `select[name="dep-${groupNumber}-GPA-Sum"]`
+    );
 
-    if (inputTable === table && group === groupNumber) {
-      inputValues[heading] = element.value;
+    if (depSum) {
+      inputValues["Sum"] = depSum.value;
+    } else if (regularSum) {
+      inputValues["Sum"] = regularSum.value;
+    }
+  }
+
+  allElements.forEach((element) => {
+    if (!element.name) return;
+
+    const { group, table: inputTable, heading } = parseInputName(element.name);
+    if (
+      inputTable === table &&
+      (group === groupNumber || group === `dep-${groupNumber}`)
+    ) {
+      if (!(table === "GPA" && heading === "Sum")) {
+        inputValues[heading] = element.value;
+      }
     }
   });
+
   return inputValues;
 }
 
@@ -500,7 +542,20 @@ function calculateTablePrice(table, inputs) {
 
 function parseInputName(name) {
   const parts = name.split("-");
-  return { group: parts[0], table: parts[1], heading: parts[2] };
+  // Handle dependant input names (dep-1-GHS-Plan format)
+  if (parts[0] === "dep") {
+    return {
+      group: parts[1],
+      table: parts[2],
+      heading: parts[3],
+    };
+  }
+  // Handle regular input names
+  return {
+    group: parts[0],
+    table: parts[1],
+    heading: parts[2],
+  };
 }
 
 function updateOverallTotals(finalTotals) {
